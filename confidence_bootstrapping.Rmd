@@ -224,7 +224,7 @@ Since the `cor()` function can take a matrix as input, we can get a correlation 
 
 ```{r}
 corcoeff <- function(m) {
-  return(abs(cor(as.matrix(m))[2]))
+  return(cor(as.matrix(m))[2])
 }
 ```
 
@@ -239,26 +239,26 @@ OK, so now we have a lot of correlation coefficients from randomly resamples bit
 
 ```{r}
 print(quantile(CP.r, probs=c(0.025, 0.975)))
-print(quantile(PA.r, probs=c(0.025, 0.975)))
+print(quantile(PA.r*-1, probs=c(0.025, 0.975))) # we don't care about sign
 ```
-
-The correlation coefficients (.64 and .53) are well within both confidence intervals, so this would mean no difference. But we can do a different test (I'd argue a better test). The correlation coefficients in each of those vectors came from the same sub-samples of the data, so that we can subtract one from the other without issue to get the differences in correlation coefficients and then get the 95% confidence interval for the _difference_ in correlation coefficients:
+Both the original correlation coefficients (.64 and .53) are within each confidence interval, so this would mean _no difference_. But we can do a different test (I'd argue a better test). The correlation coefficients in each of those vectors came from the same sub-samples of the data, so that we can subtract one from the other without issue to get the differences in correlation coefficients and then get the 95% confidence interval for the _difference_ in correlation coefficients:
 
 ```{r}
-print(quantile(CP.r - PA.r, probs=c(0.025, 0.975)))
+print(quantile(CP.r + PA.r, probs=c(0.025, 0.975))) 
+# if both have the same sign, use - instead of +
 ```
 
-This may seem like a closer call, but since 0 is within the confidence interval (at least, with my random samples it is), we'll still condclude that the two factors impulse control and percentage carbs in diet are not differently correlated with body mass index.
+If there is a difference, 0 should not fall in the confidence interval. So this may seem like a closer call, but 0 is within the confidence interval (at least, with my random samples it is), and we'll still condclude that the two factors impulse control and percentage carbs in diet are not differently correlated with body mass index.
 
 The advantage of this approach is that it also works if one set of descriptives has a very different variance, in that case, it may happen that the descriptive from one sample falls within the confidence interval of the other, but not vice versa. By getting the confidence interval of differences, you then avoid having to pick which one is the correct confidence interval, because there is only one. For reliable results, this usually does require some more bootstrap iterations. And this is why I set that to 10000 for this example.
 
 Also, the way we sampled above (with the `idx` vector) ensured that the correlation coefficients were paired. Do they have to be? If not, we would have more freedom in the tests we do with bootstrapping confidence intervals. We can test that with our example data, by simply shuffling one of the vectors:
 
 ```{r}
-print(quantile(CP.r - sample(PA.r), probs=c(0.025, 0.975)))
+print(quantile(CP.r + sample(PA.r), probs=c(0.025, 0.975)))
 ```
 
-The confidence interval is only marginally different here, but tends to be larger. This makes sense: we should have less confidence in the difference as it is based on unpaired random sampling now. So if you can; use a paired sampling approach, but if you can't, it is still fine without, but you get less power.
+The confidence interval is only marginally different here, but tends to be wider. This makes sense: we should have less confidence in the difference as it is based on unpaired random sampling now. So if you can; use a paired sampling approach, but if you can't, it is still fine without, but you get a little less power.
 
 # Conclusion
 
